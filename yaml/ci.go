@@ -1,9 +1,14 @@
 package yaml
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/alydnh/go-micro-ci-common/utils"
+	"gopkg.in/yaml.v3"
+	"io/ioutil"
+	"os"
 	"strings"
+	"text/template"
 )
 
 type CI struct {
@@ -11,10 +16,46 @@ type CI struct {
 	CommonEnvs            map[string]string   `yaml:"commonEnvs"`
 	ThirdServices         map[string]*Service `yaml:"thirdServices"`
 	Services              map[string]*Service `yaml:"services"`
+	Registry              *Registry           `yaml:"registry"`
 	Credentials           []*Credential       `yaml:"credentials"`
 	Metadata              map[string]string   `yaml:"metadata"`
-	RunName               string              `yaml:"name"`
+	CIName                string              `yaml:"name"`
 	sequencedServiceNames []string
+}
+
+func OpenCI(path string, doValidate bool) (ci *CI, err error) {
+	if _, err := os.Stat(path); nil != err {
+		return nil, err
+	}
+	ci = &CI{}
+	templateBuffer := &bytes.Buffer{}
+	var data []byte
+	data, err = ioutil.ReadFile(path)
+	if nil != err {
+		return
+	}
+	if err = yaml.Unmarshal(data, ci); nil != err {
+		return
+	}
+
+	if nil != ci.Variables && len(ci.Variables) > 0 {
+		var tpl *template.Template
+		tpl, err = template.New("t").Parse(string(data))
+		if nil != err {
+			return
+		}
+		if err = tpl.Execute(templateBuffer, ci.Variables); nil != err {
+			return
+		}
+		if err = yaml.Unmarshal(templateBuffer.Bytes(), &ci); nil != err {
+			return
+		}
+		if err := ci.Initialize(doValidate); nil != err {
+			return nil, err
+		}
+	}
+
+	return
 }
 
 func NewCI(name string) *CI {
@@ -25,7 +66,7 @@ func NewCI(name string) *CI {
 		Services:              make(map[string]*Service),
 		Credentials:           make([]*Credential, 0),
 		Metadata:              make(map[string]string),
-		RunName:               name,
+		CIName:                name,
 		sequencedServiceNames: make([]string, 0),
 	}
 }
@@ -71,11 +112,7 @@ func (y CI) GetMetadata(key string) string {
 }
 
 func (y CI) Name() string {
-	return y.Variables["goldCustomsName"]
-}
-
-func (y CI) Namespace() string {
-	return y.Variables["goldCustomsNamespace"]
+	return y.CIName
 }
 
 func (y *CI) AddOrUpdateService(service *Service) {
@@ -159,7 +196,7 @@ func (y *CI) Initialize(doValidate bool) error {
 		}
 	}
 
-	if nil == y.Services || len(y.Services) == 0 {
+	if doValidate && (nil == y.Services || len(y.Services) == 0) {
 		return fmt.Errorf("未找到services定义")
 	}
 
