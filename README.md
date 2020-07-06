@@ -1,14 +1,6 @@
 # go-micro-ci-common
 基于Golang开发的微CI公共库
 
-## 2020-07-06 日志模块判断logrusScope接口类型判断的修改
-取 logrusScope 接口类型 应使用：
-```go
-// 将 nil 转换成 logrusScope的指针地址，然后取类型，因为 直接将nil转换成接口会返回空引用
-scopeType := reflect.TypeOf((*logrusScope)(nil)).Elem()
-```
-如果直接通过值scope logrusScope取出的类型为实现类型，而非接口类型
-
 ## 2020-07-03 日志模块新增 v0.0.2-logs
 1. call 与 then 支持自定义函数调用
 2. 原 call 与 then 重构为 handle 与 thenHandle

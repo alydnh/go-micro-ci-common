@@ -35,10 +35,6 @@ func (ls *LogrusScope) Handle(h LogrusScopeCallHandler) *LogrusScopeResult {
 	}
 }
 
-func (ls *LogrusScope) entry() *logrus.Entry {
-	return ls.Entry
-}
-
 type LogrusScopeResult struct {
 	err    error
 	result interface{}
@@ -61,7 +57,7 @@ func (r *LogrusScopeResult) Then(h interface{}, args ...interface{}) (result *Lo
 	if r.HasError() {
 		return r
 	}
-	return internalCall(r, h, args)
+	return internalCall(&LogrusScope{r.Entry}, h, args)
 }
 
 func (r LogrusScopeResult) WithFields(fields logrus.Fields) *LogrusScopeResult {
@@ -100,15 +96,7 @@ func (r *LogrusScopeResult) OnError(h LogrusScopeErrorHandler) error {
 	return nil
 }
 
-func (r *LogrusScopeResult) entry() *logrus.Entry {
-	return r.Entry
-}
-
-type logrusScope interface {
-	entry() *logrus.Entry
-}
-
-func internalCall(scope logrusScope, h interface{}, args []interface{}) (result *LogrusScopeResult) {
+func internalCall(scope *LogrusScope, h interface{}, args []interface{}) (result *LogrusScopeResult) {
 	result = &LogrusScopeResult{
 		Entry: scope.entry(),
 	}
@@ -134,11 +122,11 @@ func internalCall(scope logrusScope, h interface{}, args []interface{}) (result 
 	}
 	f := reflect.ValueOf(h)
 	in := make([]reflect.Value, 0, t.NumIn())
-	// 将 nil 转换成 logrusScope的指针地址，然后取类型，因为 直接将nil转换成接口会返回空引用
-	scopeType := reflect.TypeOf((*logrusScope)(nil)).Elem()
+
+	scopeType := reflect.TypeOf(scope)
 	for i := 0; i < t.NumIn(); i++ {
 		arg := t.In(i)
-		if arg.Implements(scopeType) {
+		if arg == scopeType {
 			in = append(in, reflect.ValueOf(scope))
 		} else {
 			if len(args) == 0 {
