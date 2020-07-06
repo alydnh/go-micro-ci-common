@@ -1,6 +1,11 @@
 # go-micro-ci-common
 基于Golang开发的微CI公共库
 
+## 2020-07-06 logrusScope.internal call panic策略
+1. 在call之前进行defer recover
+2. 上报panic的stack
+3. 将panic转换成error
+
 ## 2020-07-03 日志模块新增 v0.0.2-logs
 1. call 与 then 支持自定义函数调用
 2. 原 call 与 then 重构为 handle 与 thenHandle

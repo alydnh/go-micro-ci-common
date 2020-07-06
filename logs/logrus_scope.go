@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"reflect"
+	"runtime/debug"
 )
 
 type LogrusScopeCallHandler func(ls *LogrusScope) (result interface{}, err error)
@@ -101,20 +102,6 @@ func internalCall(scope *LogrusScope, h interface{}, args []interface{}) (result
 		Entry: scope.Entry,
 	}
 
-	doRecover := true
-	defer func() {
-		if doRecover {
-			v := recover()
-			if nil != v {
-				if err, ok := v.(error); ok {
-					result.err = err
-				} else {
-					result.err = fmt.Errorf("panic: %v", v)
-				}
-			}
-		}
-	}()
-
 	t := reflect.TypeOf(h)
 	if t.Kind() != reflect.Func {
 		result.err = fmt.Errorf("h is not a function")
@@ -122,7 +109,6 @@ func internalCall(scope *LogrusScope, h interface{}, args []interface{}) (result
 	}
 	f := reflect.ValueOf(h)
 	in := make([]reflect.Value, 0, t.NumIn())
-
 	scopeType := reflect.TypeOf(scope)
 	for i := 0; i < t.NumIn(); i++ {
 		arg := t.In(i)
@@ -130,7 +116,6 @@ func internalCall(scope *LogrusScope, h interface{}, args []interface{}) (result
 			in = append(in, reflect.ValueOf(scope))
 		} else {
 			if len(args) == 0 {
-				doRecover = false
 				panic(fmt.Errorf("args length too small"))
 
 			}
@@ -142,10 +127,16 @@ func internalCall(scope *LogrusScope, h interface{}, args []interface{}) (result
 	}
 
 	if len(args) > 0 {
-		doRecover = false
 		panic(fmt.Errorf("args length too large"))
 	}
 
+	defer func() {
+		v := recover()
+		if nil != v {
+			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
+			result.err = fmt.Errorf("panic: from %s with: %v", t.String(), v)
+		}
+	}()
 	outs := f.Call(in)
 	outInterfaces := make([]interface{}, 0, len(outs))
 	for _, out := range outs {
