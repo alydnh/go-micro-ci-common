@@ -61,6 +61,9 @@ func TestLogrusScopeCall(t *testing.T) {
 		assert.Equal(t, "ThenError", err.Error())
 		return err
 	})
+
+	r = scope.Call(lc.CallPanic)
+	assert.Contains(t, r.GetError().Error(), "panic")
 }
 
 type logrusCall struct {
@@ -94,4 +97,9 @@ func (lc *logrusCall) ThenError() error {
 func (lc logrusCall) CallError(a string, ls *logs.LogrusScope, b string) (string, error) {
 	assert.NotNil(lc.T, ls)
 	return utils.EmptyString, fmt.Errorf(fmt.Sprintf("%s-%s", a, b))
+}
+
+func (lc logrusCall) CallPanic(ls *logs.LogrusScope) {
+	var a *logrusCall = nil
+	a.c = "aaa"
 }
