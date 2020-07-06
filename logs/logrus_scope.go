@@ -134,9 +134,11 @@ func internalCall(scope logrusScope, h interface{}, args []interface{}) (result 
 	}
 	f := reflect.ValueOf(h)
 	in := make([]reflect.Value, 0, t.NumIn())
+	// 将 nil 转换成 logrusScope的指针地址，然后取类型，因为 直接将nil转换成接口会返回空引用
+	scopeType := reflect.TypeOf((*logrusScope)(nil)).Elem()
 	for i := 0; i < t.NumIn(); i++ {
 		arg := t.In(i)
-		if arg == reflect.TypeOf(scope) {
+		if arg.Implements(scopeType) {
 			in = append(in, reflect.ValueOf(scope))
 		} else {
 			if len(args) == 0 {
