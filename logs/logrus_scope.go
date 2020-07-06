@@ -98,7 +98,7 @@ func (r *LogrusScopeResult) OnError(h LogrusScopeErrorHandler) error {
 
 func internalCall(scope *LogrusScope, h interface{}, args []interface{}) (result *LogrusScopeResult) {
 	result = &LogrusScopeResult{
-		Entry: scope.entry(),
+		Entry: scope.Entry,
 	}
 
 	doRecover := true
