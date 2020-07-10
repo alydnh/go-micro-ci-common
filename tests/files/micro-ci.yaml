@@ -8,6 +8,7 @@ registry:
 variables:
   v1: v1-value
   v2: v2-value
+  namespace: "test.micro-ci"
 commonEnvs:
   cev1: cev1-value
   cev2: cev2-value
@@ -23,4 +24,18 @@ thirdService:
     assertions:
       successes:
         - Consul agent running!
+  micro-ci-api:
+    image:
+      name: micro:latest
+      ref: docker.io/library/micro
+    exposedPorts:
+      8089/tcp:
+        hostIP: 0.0.0.0
+        hostPort: 7089
+    args:
+      - micro
+      - --api_address=0.0.0.0:8089
+      - api
+      - --handle=rpc
+      - --namespace=
 services: {}
