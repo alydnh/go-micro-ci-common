@@ -1,6 +1,10 @@
 # go-micro-ci-common
 基于Golang开发的微CI公共库
 
+## 2020-07-10 service 新增 disableCommonEnv
+1. 部署时，如disableCommonEnv:true时，容器启动不会使用commonEnv的定义
+2. 容器环境变量覆盖优先级 commonEnv(if not 如disableCommonEnv) < registryEnv < serviceEnv
+
 ## 2020-07-06 logrusScope.internal call panic策略
 1. 在call之前进行defer recover
 2. 上报panic的stack

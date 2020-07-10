@@ -2,12 +2,13 @@ name: micro-ci-test
 namespace: test.{{ .v1 }}
 registry:
   type: consul
-  address: "{{ .v2 }}-consul"
+  address: "{{ namespace }}"
   port: 8500
   useSSL: false
 variables:
   v1: v1-value
   v2: v2-value
+  namespace: "test.micro-ci"
 commonEnvs:
   cev1: cev1-value
   cev2: cev2-value
