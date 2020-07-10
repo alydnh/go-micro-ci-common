@@ -66,6 +66,29 @@ func TestLogrusScopeCall(t *testing.T) {
 	assert.Contains(t, r.GetError().Error(), "panic")
 }
 
+func TestLogrusScopeCatch(t *testing.T) {
+	scope := &logs.LogrusScope{Entry: logrus.New().WithField("test", "test")}
+	mustEmpty := utils.EmptyString
+	err := scope.Handle(func(ls *logs.LogrusScope) (result interface{}, err error) {
+		return nil, fmt.Errorf("aaa")
+	}).Catch(func(err error, ls *logs.LogrusScope) error {
+		assert.Equal(t, "aaa", err.Error())
+		return nil
+	}).ThenHandle(func(last interface{}, ls *logs.LogrusScope) (result interface{}, err error) {
+		return nil, fmt.Errorf("bbb")
+	}).Catch(func(err error, ls *logs.LogrusScope) error {
+		return err
+	}).ThenHandle(func(last interface{}, ls *logs.LogrusScope) (result interface{}, err error) {
+		mustEmpty = "notEmpty"
+		return
+	}).OnError(func(err error, ls *logs.LogrusScope) error {
+		assert.Equal(t, "bbb", err.Error())
+		return err
+	})
+	assert.Empty(t, mustEmpty)
+	assert.NotNil(t, err)
+}
+
 type logrusCall struct {
 	*testing.T
 	a, b, c string

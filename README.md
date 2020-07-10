@@ -1,6 +1,10 @@
 # go-micro-ci-common
 基于Golang开发的微CI公共库
 
+## 2020-07-10 logrusScope 新增 catch 方法
+1. 可以在call与then这后调用catch
+2. 返回错误则会继续调用onError, 如返回空，继续then
+
 ## 2020-07-10 service 新增 disableCommonEnv
 1. 部署时，如disableCommonEnv:true时，容器启动不会使用commonEnv的定义
 2. 容器环境变量覆盖优先级 commonEnv(if not 如disableCommonEnv) < registryEnv < serviceEnv
