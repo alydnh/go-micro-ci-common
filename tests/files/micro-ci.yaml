@@ -2,7 +2,7 @@ name: micro-ci-test
 namespace: test.{{ .v1 }}
 registry:
   type: consul
-  address: "{{ namespace }}"
+  address: "{{ .v2 }}-consul"
   port: 8500
   useSSL: false
 variables:
@@ -24,4 +24,18 @@ thirdService:
     assertions:
       successes:
         - Consul agent running!
+  micro-ci-api:
+    image:
+      name: micro:latest
+      ref: docker.io/library/micro
+    exposedPorts:
+      8089/tcp:
+        hostIP: 0.0.0.0
+        hostPort: 7089
+    args:
+      - micro
+      - --api_address=0.0.0.0:8089
+      - api
+      - --handle=rpc
+      - --namespace=
 services: {}
